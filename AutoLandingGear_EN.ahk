@@ -1,4 +1,4 @@
-﻿
+
 ; ==========================================
 ; ELITE DANGEROUS - Auto Landing Gear
 ; Made by Revahar
@@ -11,39 +11,39 @@
 ; INSTALLATION
 ; ==========================================
 
-; Installer la dernière version d'AutoHotkey :
+; Install the latest version of AutoHotkey:
 ; https://www.autohotkey.com/download/
 ;
-; Clic droit sur ce script -> Ouvrir avec AutoHotkey
+; Right-click this script -> Open with AutoHotkey
 
 
 ; ==========================================
-; PARAMETRES MODIFIABLES
+; CONFIGURABLE SETTINGS
 ; ==========================================
 
-; Touche clavier affectée aux trains
+; Key assigned to the landing gear
 GearKey := "g"
 
-; Station orbitale :
-; délai avant sortie des trains après passage de la BAL
+; Orbital stations:
+; delay before deploying the landing gear after passing the mail slot
 DeployDelay := 1500
 
-; Autres stations :
-; délai de sortie des trains après apparition du Mass Lock
+; Other stations:
+; delay before deploying the landing gear after Mass Lock appears
 MassLockDelay := 2500
 
-; Fréquence de surveillance du Mass Lock
+; Mass Lock polling interval
 MassLockPollDelay := 500
 
-; Automatiser le déploiement des trains
+; Automatically deploy the landing gear
 AutoDeploy := true
 
-; Automatiser le repli des trains
+; Automatically retract the landing gear
 AutoRetract := true
 
 
 ; ==========================================
-; CONFIGURATION DU JOURNAL
+; JOURNAL CONFIGURATION
 ; ==========================================
 
 JournalFolder := EnvGet("USERPROFILE")
@@ -51,16 +51,16 @@ JournalFolder := EnvGet("USERPROFILE")
 
 StatusFile := JournalFolder "\Status.json"
 
-; Type de station actuellement connu
+; Currently detected station type
 CurrentStationIsOrbital := false
 
-; Etat réel des trains au lancement
+; Actual landing gear state at startup
 GearDown := ReadGearState()
 
-; Evite de relire un Status.json ancien
+; Prevents an outdated Status.json from being read again
 LastCommandAt := 0
 
-; Journal actuellement surveillé
+; Journal file currently being monitored
 CurrentJournal := FindLatestJournal()
 
 if (CurrentJournal != "")
@@ -68,12 +68,12 @@ if (CurrentJournal != "")
 else
     LastPosition := 0
 
-; Surveillance du journal
+; Monitor the journal
 SetTimer(Poll, 500)
 
 
 ; ==========================================
-; LECTURE DE L'ETAT DES TRAINS
+; READ LANDING GEAR STATE
 ; ==========================================
 
 ReadGearState() {
@@ -98,7 +98,7 @@ ReadGearState() {
 
 
 ; ==========================================
-; LECTURE DE L'ETAT DU MASS LOCK
+; READ MASS LOCK STATE
 ; ==========================================
 
 ReadMassLockState() {
@@ -123,7 +123,7 @@ ReadMassLockState() {
 
 
 ; ==========================================
-; RECHERCHE DU DERNIER JOURNAL
+; FIND THE LATEST JOURNAL FILE
 ; ==========================================
 
 FindLatestJournal() {
@@ -149,26 +149,26 @@ FindLatestJournal() {
 
 
 ; ==========================================
-; COMMANDE DES TRAINS
+; LANDING GEAR CONTROL
 ; ==========================================
 
 SetGear(Down) {
     global GearDown, GearKey, LastCommandAt
     global AutoDeploy, AutoRetract
 
-    ; Vérifie si l'action automatique est autorisée
+    ; Check whether the automatic action is enabled
     if (Down && !AutoDeploy)
         return
 
     if (!Down && !AutoRetract)
         return
 
-    ; Ne rien faire si les trains sont déjà
-    ; dans le bon état
+    ; Do nothing if the landing gear is already
+    ; in the correct state
     if (GearDown != "" && GearDown = Down)
         return
 
-    ; Le jeu doit être actif
+    ; The game must be active
     if !WinActive("ahk_exe EliteDangerous64.exe")
         return
 
@@ -180,8 +180,8 @@ SetGear(Down) {
 
 
 ; ==========================================
-; SORTIE DES TRAINS - STARPORT
-; Stations orbitales
+; LANDING GEAR DEPLOYMENT - STARPORT
+; Orbital stations
 ; ==========================================
 
 DeployGearDelayed() {
@@ -190,8 +190,8 @@ DeployGearDelayed() {
 
 
 ; ==========================================
-; SURVEILLANCE CONTINUE DU MASS LOCK
-; Stations non orbitales
+; CONTINUOUS MASS LOCK MONITORING
+; Non-orbital stations
 ; ==========================================
 
 MassLockWatch() {
@@ -199,52 +199,52 @@ MassLockWatch() {
 
     MassLock := ReadMassLockState()
 
-    ; Statut indisponible :
-    ; on continue à surveiller
+    ; Status unavailable:
+    ; keep monitoring
     if (MassLock = "")
         return
 
-    ; Mass Lock absent :
-    ; on attend
+    ; Mass Lock not detected:
+    ; wait
     if !MassLock
         return
 
-    ; Mass Lock détecté :
-    ; arrêt de la surveillance continue
+    ; Mass Lock detected:
+    ; stop continuous monitoring
     SetTimer(MassLockWatch, 0)
 
-    ; Démarrage du délai de 2,5 secondes
+    ; Start the 2.5-second delay
     SetTimer(DeployGearMassLockDelayed, 0)
     SetTimer(DeployGearMassLockDelayed, -MassLockDelay)
 }
 
 
 ; ==========================================
-; SORTIE DES TRAINS APRES MASS LOCK
+; LANDING GEAR DEPLOYMENT AFTER MASS LOCK
 ; ==========================================
 
 DeployGearMassLockDelayed() {
     global GearDown
 
-    ; Relit l'état réel des trains
+    ; Read the actual landing gear state again
     ActualGear := ReadGearState()
 
-    ; Si le statut est indisponible :
-    ; on ne fait rien
+    ; If the status is unavailable:
+    ; do nothing
     if (ActualGear = "")
         return
 
-    ; Synchronise l'état réel
+    ; Synchronize the actual state
     GearDown := ActualGear
 
-    ; Sort les trains uniquement s'ils sont rentrés
+    ; Deploy the landing gear only if it is retracted
     if !ActualGear
         SetGear(true)
 }
 
 
 ; ==========================================
-; TRAITEMENT DES EVENEMENTS DU JOURNAL
+; PROCESS JOURNAL EVENTS
 ; ==========================================
 
 ProcessJournalLine(Line) {
@@ -258,48 +258,69 @@ ProcessJournalLine(Line) {
         switch EventName {
 
             ; ----------------------------------
-            ; DECOLLAGE
+            ; TAKEOFF
             ; ----------------------------------
 
             case "Undocked":
 
-                ; Annule toutes les sorties en attente
+                ; Cancel all pending deployments
                 SetTimer(DeployGearDelayed, 0)
                 SetTimer(MassLockWatch, 0)
                 SetTimer(DeployGearMassLockDelayed, 0)
 
-                ; Réinitialise le type de station
+                ; Reset the station type
                 CurrentStationIsOrbital := false
 
-                ; Rentrée immédiate des trains
+                ; Retract the landing gear immediately
                 SetGear(false)
+				
+			; ----------------------------------
+            ; TAKEOFF D'UNE PLANETE
+            ; ----------------------------------
+
+            case "Liftoff":
+
+                ; Check that the takeoff is player-controlled
+                if RegExMatch(
+                    Line,
+                    '"PlayerControlled"\s*:\s*true'
+                ) {
+
+                    ; Annule les sorties en attente
+                    SetTimer(DeployGearDelayed, 0)
+                    SetTimer(MassLockWatch, 0)
+                    SetTimer(DeployGearMassLockDelayed, 0)
+
+                    ; Retract the landing gear immediately
+                    SetGear(false)
+                }
 
 
             ; ----------------------------------
-            ; ANNULATION D'APPONTAGE
+            ; DOCKING CANCELLED
             ; ----------------------------------
 
             case "DockingCancelled":
 
-                ; Annule toutes les sorties en attente
+                ; Cancel all pending deployments
                 SetTimer(DeployGearDelayed, 0)
                 SetTimer(MassLockWatch, 0)
                 SetTimer(DeployGearMassLockDelayed, 0)
 
-                ; Réinitialise le type de station
+                ; Reset the station type
                 CurrentStationIsOrbital := false
 
-                ; Rentrée immédiate des trains
+                ; Retract the landing gear immediately
                 SetGear(false)
 
 
             ; ----------------------------------
-            ; AUTORISATION D'APPONTAGE
+            ; DOCKING GRANTED
             ; ----------------------------------
 
             case "DockingGranted":
 
-                ; Lecture du type de station
+                ; Read the station type
                 if RegExMatch(
                     Line,
                     '"StationType"\s*:\s*"([^"]+)"',
@@ -308,7 +329,7 @@ ProcessJournalLine(Line) {
 
                     StationType := StationMatch[1]
 
-                    ; Stations orbitales
+                    ; Orbital stations
                     IsOrbital := (
                         StationType = "Coriolis"
                         || StationType = "Orbis"
@@ -316,19 +337,19 @@ ProcessJournalLine(Line) {
                         || StationType = "AsteroidBase"
                     )
 
-                    ; Mémorise le type de station
+                    ; Store the station type
                     CurrentStationIsOrbital := IsOrbital
 
-                    ; Stations non orbitales :
-                    ; surveillance continue du Mass Lock
+                    ; Non-orbital stations :
+                    ; continuous Mass Lock monitoring
                     if !IsOrbital {
 
-                        ; Annule les timers éventuels
+                        ; Cancel any existing timers
                         SetTimer(DeployGearDelayed, 0)
                         SetTimer(MassLockWatch, 0)
                         SetTimer(DeployGearMassLockDelayed, 0)
 
-                        ; Démarre la surveillance du Mass Lock
+                        ; Start monitoring Mass Lock
                         SetTimer(
                             MassLockWatch,
                             MassLockPollDelay
@@ -340,8 +361,8 @@ ProcessJournalLine(Line) {
 
 
     ; ======================================
-    ; DETECTION MUSIQUE STARPORT
-    ; Stations orbitales uniquement
+    ; STARPORT MUSIC DETECTION
+    ; Orbital stations uniquement
     ; ======================================
 
     if (
@@ -352,11 +373,11 @@ ProcessJournalLine(Line) {
         )
     ) {
 
-        ; Annule les timers Mass Lock éventuels
+        ; Cancel any Mass Lock timers
         SetTimer(MassLockWatch, 0)
         SetTimer(DeployGearMassLockDelayed, 0)
 
-        ; Conserve le délai Starport de 1,5 seconde
+        ; Keep the 1.5-second Starport delay
         SetTimer(DeployGearDelayed, 0)
         SetTimer(DeployGearDelayed, -DeployDelay)
     }
@@ -364,14 +385,14 @@ ProcessJournalLine(Line) {
 
 
 ; ==========================================
-; SURVEILLANCE DU JOURNAL
+; JOURNAL MONITORING
 ; ==========================================
 
 Poll() {
     global CurrentJournal, LastPosition
     global GearDown, LastCommandAt
 
-    ; Resynchronisation avec l'état réel du jeu
+    ; Resynchronize with the actual in-game state
     if (A_TickCount - LastCommandAt > 2000) {
 
         ActualState := ReadGearState()
@@ -380,7 +401,7 @@ Poll() {
             GearDown := ActualState
     }
 
-    ; Recherche du journal le plus récent
+    ; Find the most recent journal file
     NewJournal := FindLatestJournal()
 
     if (NewJournal = "")
